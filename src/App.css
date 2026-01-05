@@ -1,0 +1,185 @@
+/* Add this to your App.css file to fix the blank space on the right */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.App {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ensure all page containers don't exceed viewport */
+.debugging-page,
+.dashboard-page,
+.home-page,
+.login-page {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+/* Fix for debugging page specifically */
+.debugging-container {
+  width: 100%;
+  max-width: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.code-editors-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Ensure code editors don't overflow */
+.code-editor {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0; /* Important for grid items */
+  box-sizing: border-box;
+}
+
+.code-textarea {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Responsive fixes */
+@media (max-width: 1024px) {
+  .code-editors-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Additional debugging page styles */
+.debugging-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.welcome-section {
+  background: white;
+  padding: 30px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.welcome-section h1 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin-bottom: 10px;
+}
+
+.welcome-section p {
+  color: #64748b;
+  font-size: 1.1rem;
+}
+
+.current-selection {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.btn-back, .btn-hint {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-back {
+  background: #64748b;
+  color: white;
+}
+
+.btn-back:hover {
+  background: #475569;
+  transform: translateY(-2px);
+}
+
+.btn-hint {
+  background: #f59e0b;
+  color: white;
+}
+
+.btn-hint:hover:not(:disabled) {
+  background: #d97706;
+  transform: translateY(-2px);
+}
+
+.btn-hint:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.validation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.spinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid #f3f3f3;
+  border-top: 5px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.validation-overlay p {
+  color: white;
+  font-size: 1.2rem;
+  margin-top: 20px;
+}

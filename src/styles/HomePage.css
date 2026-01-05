@@ -1,0 +1,51 @@
+.home-page {
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.cta-section {
+  padding: 80px 20px;
+  text-align: center;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.cta-section h2 {
+  font-size: 2.5rem;
+  color: #1e293b;
+  margin-bottom: 40px;
+  font-weight: 800;
+}
+
+.cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cta-buttons .btn-primary,
+.cta-buttons .btn-secondary {
+  min-width: 200px;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 60px 20px;
+  }
+  
+  .cta-section h2 {
+    font-size: 2rem;
+  }
+  
+  .cta-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .cta-buttons .btn-primary,
+  .cta-buttons .btn-secondary {
+    width: 100%;
+    max-width: 300px;
+  }
+}
