@@ -144,7 +144,7 @@
   border: 1px solid rgba(168, 85, 247, 0.2);
   backdrop-filter: blur(10px);
   flex: 1;
-  min-width: 150px;
+  min-width: 250px;
   transition: all 0.3s ease;
 }
 
@@ -611,14 +611,17 @@
     flex: 1 1 calc(50% - 12px);
     min-width: 0;
     padding: 10px 12px;
+    
   }
   
   .stat-number {
     font-size: 1.6rem;
+    margin: 0 auto;
   }
   
   .stat-label {
     font-size: 0.8rem;
+    margin: 0 auto;
   }
   
   .code-preview {
