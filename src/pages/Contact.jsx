@@ -52,8 +52,8 @@ function Contact() {
 
   const contactInfo = [
     { icon: <FaEnvelope />, title: 'Email', info: 'support@debugmaster.com', action: 'mailto:support@debugmaster.com' },
-    { icon: <FaPhone />, title: 'Phone', info: '+1 (555) 123-4567', action: 'tel:+15551234567' },
-    { icon: <FaMapMarkerAlt />, title: 'Location', info: 'San Francisco, CA', action: 'https://maps.google.com' },
+    { icon: <FaPhone />, title: 'Phone', info: '+27 (0)23 123 4567', action: 'tel:+27231234567' },
+    { icon: <FaMapMarkerAlt />, title: 'Location', info: 'Gauteng, South Africa', action: 'https://maps.google.com' },
     { icon: <FaClock />, title: 'Hours', info: 'Mon-Fri: 9AM-6PM PST', action: null }
   ]
 
