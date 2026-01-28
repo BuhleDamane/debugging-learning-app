@@ -1,10 +1,59 @@
-import React from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import '../styles/HeroSection.css'
+
+function Counter({ value, suffix = "", duration = 800 }) { 
+  const [count, setCount] = useState(0)
+  const ref = useRef(null)
+  const isInView = useInView(ref, { once: true })
+
+  useEffect(() => {
+    if (isInView) {
+      let start = 0
+      const end = parseInt(value)
+      if (start === end) return
+
+      let startTime = null
+      const animationDuration = duration
+      
+      const animateCount = (currentTime) => {
+        if (!startTime) startTime = currentTime
+        const elapsedTime = currentTime - startTime
+        const progress = Math.min(elapsedTime / animationDuration, 1)
+        
+
+        const easeOutQuart = 1 - Math.pow(1 - progress, 4)
+        const currentCount = Math.floor(easeOutQuart * end)
+        
+        setCount(currentCount)
+        
+        if (progress < 1) {
+          requestAnimationFrame(animateCount)
+        }
+      }
+      
+      const animationId = requestAnimationFrame(animateCount)
+      
+      return () => cancelAnimationFrame(animationId)
+    }
+  }, [isInView, value, duration])
+
+  return (
+    <span ref={ref} className="stat-number">
+      {count}{suffix}
+    </span>
+  )
+}
 
 function HeroSection() {
   const navigate = useNavigate()
+  const statsRef = useRef(null)
+  const statsInView = useInView(statsRef, { once: true, margin: "-100px" })
+
+  const handleSignUpClick = () => {
+    navigate('/login', { state: { showSignup: true } })
+  }
 
   return (
     <section className="hero-section">
@@ -41,37 +90,47 @@ function HeroSection() {
           >
             <button 
               className="btn-hero-primary"
-              onClick={() => navigate('/debugging')}
+              onClick={handleSignUpClick}
             >
-              Start Debugging Now
+              Start Debugging for Free
             </button>
             <button 
               className="btn-hero-secondary"
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/contact')}
             >
-              Sign Up Free
+              Contact Us
             </button>
           </motion.div>
           
-          <motion.div 
-            className="hero-stats"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8, duration: 0.8 }}
-          >
-            <div className="stat">
-              <span className="stat-number">1000+</span>
+          <div ref={statsRef} className="hero-stats">
+            <motion.div 
+              className="stat"
+              initial={{ opacity: 0, y: 20 }}
+              animate={statsInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.2, duration: 0.5 }}
+            >
+              <Counter value={1000} suffix="+" duration={800} /> {}
               <span className="stat-label">Challenges</span>
-            </div>
-            <div className="stat">
-              <span className="stat-number">500+</span>
+            </motion.div>
+            <motion.div 
+              className="stat"
+              initial={{ opacity: 0, y: 20 }}
+              animate={statsInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.3, duration: 0.5 }}
+            >
+              <Counter value={500} suffix="+" duration={800} /> {}
               <span className="stat-label">Active Users</span>
-            </div>
-            <div className="stat">
-              <span className="stat-number">95%</span>
+            </motion.div>
+            <motion.div 
+              className="stat"
+              initial={{ opacity: 0, y: 20 }}
+              animate={statsInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              <Counter value={95} suffix="%" duration={600} /> {}
               <span className="stat-label">Success Rate</span>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </motion.div>
         
         <motion.div 

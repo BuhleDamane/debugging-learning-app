@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import '../../styles/Modals.css'
 
-function LanguageLevelModal({ onComplete }) {
+function LanguageLevelModal({ onComplete, onClose }) {
   const [step, setStep] = useState(1)
   const [language, setLanguage] = useState('')
   const [level, setLevel] = useState('')
@@ -23,9 +23,22 @@ function LanguageLevelModal({ onComplete }) {
     onComplete({ language, level: lvl })
   }
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose()
+    }
+  }
+
   return (
     <div className="modal-overlay">
       <div className="language-modal">
+        <button className="modal-close-btn" onClick={handleClose}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x2="18" y2="18" x1="6" y1="6"></line>
+          </svg>
+        </button>
+        
         {step === 1 && (
           <>
             <h2>Choose Debugging Language</h2>

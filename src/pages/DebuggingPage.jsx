@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import CodeEditor from '../components/CodeEditor'
 import HintSystem from '../components/HintSystem'
-import toast from 'react-hot-toast'
+import LanguageLevelModal from '../components/modals/LanguageLevelModal'
 import '../styles/DebuggingPage.css'
 
 function DebuggingPage() {
@@ -15,23 +15,28 @@ function DebuggingPage() {
   const [hints, setHints] = useState([])
   const [showHintWarning, setShowHintWarning] = useState(false)
   const [currentChoice, setCurrentChoice] = useState(null)
+  const [showLanguageModal, setShowLanguageModal] = useState(false)
   const navigate = useNavigate()
 
   useEffect(() => {
     const choice = localStorage.getItem('debuggingChoice')
     if (choice) {
       setCurrentChoice(JSON.parse(choice))
-    } else {
-      navigate('/dashboard')
     }
     
-    // Initialize hints
     setHints([
       { id: 1, text: '', used: false },
       { id: 2, text: '', used: false },
       { id: 3, text: '', used: false }
     ])
-  }, [navigate])
+  }, [])
+
+  const handleLanguageSelection = (choice) => {
+    setCurrentChoice(choice)
+    localStorage.setItem('debuggingChoice', JSON.stringify(choice))
+    setShowLanguageModal(false)
+    toast.success(`Selected ${choice.language.toUpperCase()} - ${choice.level.toUpperCase()}`)
+  }
 
   const generateCode = async () => {
     if (!currentChoice) {
@@ -42,11 +47,7 @@ function DebuggingPage() {
     setIsGenerating(true)
     
     try {
-      // ========================================
-      // USING HUGGING FACE FREE API (NO COST!)
-      // ========================================
-      // Get your FREE API token from: https://huggingface.co/settings/tokens
-      const HF_API_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE'  // ← Paste your token here
+      const HF_API_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE'
       
       if (HF_API_TOKEN === 'YOUR_HUGGING_FACE_TOKEN_HERE') {
         toast.error('Please add your Hugging Face token! It\'s FREE - get it at huggingface.co/settings/tokens')
@@ -54,7 +55,6 @@ function DebuggingPage() {
         return
       }
 
-      // Using a free model from Hugging Face
       const response = await fetch(
         'https://api-inference.huggingface.co/models/microsoft/Phi-3.5-mini-instruct',
         {
@@ -75,8 +75,7 @@ function DebuggingPage() {
       )
       
       if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`API Error: ${response.status} - ${errorText}`)
+        throw new Error(`API Error: ${response.status}`)
       }
       
       const data = await response.json()
@@ -86,7 +85,6 @@ function DebuggingPage() {
         setBrokenCode(generatedCode)
         toast.success('Code generated successfully!')
         
-        // Generate hints based on the broken code
         await generateHints(generatedCode)
       } else {
         throw new Error('Unexpected API response format')
@@ -95,24 +93,23 @@ function DebuggingPage() {
       console.error('Error generating code:', error)
       toast.error(`Failed to generate code: ${error.message}`)
       
-      // Fallback code if API fails
       const fallbackCode = currentChoice.language === 'react' 
         ? `import React from 'react'
 
 function Counter() {
-  const [count, setCount] = useState(0)  // Bug: missing React import for useState
+  const [count, setCount] = useState(0)
   
   return (
     <div>
       <h1>Count: {count}</h1>
-      <button onClick={() => setCount(count - 1)}>Increment</button>  // Bug: should be count + 1
+      <button onClick={() => setCount(count - 1)}>Increment</button>
     </div>
   )
 }
 
 export default Counter`
         : `function calculateSum(a, b) {
-  return a - b  // Bug: should be addition (+)
+  return a - b
 }
 
 const result = calculateSum(5, 3)
@@ -120,7 +117,6 @@ console.log(result) // Expected: 8, Actual: 2`
 
       setBrokenCode(fallbackCode)
       
-      // Set fallback hints
       const fallbackHints = currentChoice.language === 'react'
         ? [
             { id: 1, text: "Check if all required React hooks are properly imported", used: false },
@@ -141,7 +137,7 @@ console.log(result) // Expected: 8, Actual: 2`
 
   const generateHints = async (code) => {
     try {
-      const HF_API_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE'  // ← Same token
+      const HF_API_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE'
       
       if (HF_API_TOKEN === 'YOUR_HUGGING_FACE_TOKEN_HERE') {
         return
@@ -170,7 +166,6 @@ console.log(result) // Expected: 8, Actual: 2`
         const data = await response.json()
         const hintsText = data[0].generated_text
         
-        // Parse hints from the response
         const hintLines = hintsText.split('\n').filter(line => line.trim().startsWith('Hint'))
         const parsedHints = hintLines.slice(0, 3).map((line, index) => ({
           id: index + 1,
@@ -190,17 +185,13 @@ console.log(result) // Expected: 8, Actual: 2`
   const validateCode = () => {
     setIsValidating(true)
     
-    // Simulate validation
     setTimeout(() => {
-      // For demo purposes, check if user made changes
       if (userCode !== '// Fix the broken code here...') {
         setShowConfetti(true)
         toast.success('Congratulations! Code validated successfully!')
         
-        // Update progress
         updateUserProgress()
         
-        // Reset after celebration
         setTimeout(() => {
           setShowConfetti(false)
           const goNext = window.confirm('Great job! Would you like to try another challenge?')
@@ -265,79 +256,121 @@ console.log(result) // Expected: 8, Actual: 2`
     toast.error('Pasting is disabled! Please type the code manually.')
   }
 
+  const handleStartDebugging = () => {
+    setShowLanguageModal(true)
+  }
+
   return (
     <div className="debugging-page">
       <Navbar />
       
       <div className="debugging-container">
-        <div className="welcome-section">
-          <h1>Welcome User</h1>
-          <p>Are you ready to master debugging?</p>
-          <div className="current-selection">
-            <span className="badge">{currentChoice?.language?.toUpperCase()}</span>
-            <span className="badge">{currentChoice?.level?.toUpperCase()}</span>
-          </div>
-        </div>
-        
-        <div className="action-buttons">
-          <button className="btn-back" onClick={handleBack}>
-            Back
-          </button>
-          <button 
-            className="btn-hint" 
-            onClick={handleHintClick}
-            disabled={hints.filter(h => h.used).length >= 3}
-          >
-            Hint ({3 - hints.filter(h => h.used).length} remaining)
-          </button>
-        </div>
-        
-        <HintSystem 
-          showWarning={showHintWarning}
-          onCloseWarning={() => setShowHintWarning(false)}
-          onAcceptWarning={() => {
-            setShowHintWarning(false)
-            useHint()
-          }}
-          hints={hints}
-        />
-        
-        <div className="code-editors-container">
-          <CodeEditor
-            title="Broken Code"
-            code={brokenCode}
-            readOnly={true}
-            language={currentChoice?.language}
-            button={{
-              text: isGenerating ? 'Generating...' : 'Generate Code',
-              onClick: generateCode,
-              color: 'blue',
-              disabled: isGenerating
-            }}
-          />
+        {!currentChoice ? (
+          <div className="welcome-section start-screen">
+            <h1>Welcome to Debugging Challenge</h1>
+            <p className="modal-subtitle">Test your debugging skills with real-world code problems</p>
+            
           
-          <CodeEditor
-            title="Your Solution"
-            code={userCode}
-            onChange={setUserCode}
-            readOnly={false}
-            language={currentChoice?.language}
-            button={{
-              text: isValidating ? 'Validating...' : 'Validate Code',
-              onClick: validateCode,
-              color: 'green',
-              disabled: userCode === '// Fix the broken code here...' || isValidating
-            }}
-            onCopy={handleCopy}
-            onPaste={handlePaste}
-          />
-        </div>
+            
+            <button 
+              className="btn-start-debugging"
+              onClick={handleStartDebugging}
+            >
+              Start Debugging Challenge
+            </button>
+            
+            <p className="instruction-text">
+              Click above to select your language and difficulty level
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="welcome-section">
+              <h1>Welcome User</h1>
+              <p>Are you ready to master debugging?</p>
+              <div className="current-selection">
+                <span className="badge">{currentChoice?.language?.toUpperCase()}</span>
+                <span className="badge">{currentChoice?.level?.toUpperCase()}</span>
+                <button 
+                  className="btn-change-selection"
+                  onClick={() => {
+                    localStorage.removeItem('debuggingChoice')
+                    setCurrentChoice(null)
+                  }}
+                >
+                  Change Selection
+                </button>
+              </div>
+            </div>
+            
+            <div className="action-buttons">
+              <button className="btn-back" onClick={handleBack}>
+                Back to Dashboard
+              </button>
+              <button 
+                className="btn-hint" 
+                onClick={handleHintClick}
+                disabled={hints.filter(h => h.used).length >= 3}
+              >
+                Hint ({3 - hints.filter(h => h.used).length} remaining)
+              </button>
+            </div>
+            
+            <HintSystem 
+              showWarning={showHintWarning}
+              onCloseWarning={() => setShowHintWarning(false)}
+              onAcceptWarning={() => {
+                setShowHintWarning(false)
+                useHint()
+              }}
+              hints={hints}
+            />
+            
+            <div className="code-editors-container">
+              <CodeEditor
+                title="Broken Code"
+                code={brokenCode}
+                readOnly={true}
+                language={currentChoice?.language}
+                button={{
+                  text: isGenerating ? 'Generating...' : 'Generate Code',
+                  onClick: generateCode,
+                  color: 'blue',
+                  disabled: isGenerating
+                }}
+              />
+              
+              <CodeEditor
+                title="Your Solution"
+                code={userCode}
+                onChange={setUserCode}
+                readOnly={false}
+                language={currentChoice?.language}
+                button={{
+                  text: isValidating ? 'Validating...' : 'Validate Code',
+                  onClick: validateCode,
+                  color: 'green',
+                  disabled: userCode === '// Fix the broken code here...' || isValidating
+                }}
+                onCopy={handleCopy}
+                onPaste={handlePaste}
+              />
+            </div>
+          </>
+        )}
         
         {isValidating && (
           <div className="validation-overlay">
             <div className="spinner"></div>
             <p>Validating your code...</p>
           </div>
+        )}
+        
+        {showLanguageModal && (
+          <LanguageLevelModal 
+            onComplete={handleLanguageSelection}
+            onClose={() => setShowLanguageModal(false)}
+          />
         )}
       </div>
     </div>

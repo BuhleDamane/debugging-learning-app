@@ -1,12 +1,8 @@
-/* Add this to your App.css file to fix the blank space on the right */
-
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
-
 
 #root {
   width: 100%;
@@ -21,7 +17,6 @@
   position: relative;
 }
 
-/* Ensure all page containers don't exceed viewport */
 .debugging-page,
 .dashboard-page,
 .home-page,
@@ -30,7 +25,6 @@
   overflow-x: hidden;
 }
 
-/* Fix for debugging page specifically */
 .debugging-container {
   width: 100%;
   max-width: 100%;
@@ -47,11 +41,10 @@
   box-sizing: border-box;
 }
 
-/* Ensure code editors don't overflow */
 .code-editor {
   width: 100%;
   max-width: 100%;
-  min-width: 0; /* Important for grid items */
+  min-width: 0; 
   box-sizing: border-box;
 }
 
@@ -61,35 +54,36 @@
   box-sizing: border-box;
 }
 
-/* Responsive fixes */
 @media (max-width: 1024px) {
   .code-editors-container {
     grid-template-columns: 1fr;
   }
 }
 
-/* Additional debugging page styles */
 .debugging-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4A1B6B 0%, #5B2A7F 100%);
 }
 
 .welcome-section {
-  background: white;
+  background: rgba(30, 20, 50, 0.95); 
   padding: 30px;
   border-radius: 15px;
   margin-bottom: 20px;
   text-align: center;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(168, 85, 247, 0.2);
 }
 
 .welcome-section h1 {
   font-size: 2rem;
-  color: #1e293b;
+  color: #FFFFFF;
   margin-bottom: 10px;
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
 }
 
 .welcome-section p {
-  color: #64748b;
+  color: #C084FC;
   font-size: 1.1rem;
 }
 
@@ -101,12 +95,13 @@
 }
 
 .badge {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #A855F7 0%, #C084FC 100%);
   color: white;
   padding: 8px 16px;
   border-radius: 20px;
   font-size: 0.9rem;
   font-weight: 600;
+  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3);
 }
 
 .action-buttons {
@@ -126,28 +121,34 @@
 }
 
 .btn-back {
-  background: #64748b;
-  color: white;
+  background: linear-gradient(135deg, #2D1B4E 0%, #1E1432 100%);
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.3);
 }
 
 .btn-back:hover {
-  background: #475569;
+  background: linear-gradient(135deg, #1E1432 0%, #0A0A0F 100%);
   transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(168, 85, 247, 0.2);
 }
 
 .btn-hint {
-  background: #f59e0b;
+  background: linear-gradient(135deg, #8B5CF6 0%, #9333EA 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 
 .btn-hint:hover:not(:disabled) {
-  background: #d97706;
+  background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
 
 .btn-hint:disabled {
-  background: #9ca3af;
+  background: #2D1B4E;
+  color: #5B2A7F;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .validation-overlay {
@@ -156,7 +157,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(10, 10, 15, 0.95); 
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -167,10 +168,11 @@
 .spinner {
   width: 50px;
   height: 50px;
-  border: 5px solid #f3f3f3;
-  border-top: 5px solid #667eea;
+  border: 5px solid rgba(30, 20, 50, 0.3); 
+  border-top: 5px solid #A855F7;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.5);
 }
 
 @keyframes spin {
@@ -179,7 +181,98 @@
 }
 
 .validation-overlay p {
-  color: white;
+  color: #C084FC;
   font-size: 1.2rem;
   margin-top: 20px;
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+}
+
+.code-editor {
+  background: rgba(30, 20, 50, 0.9);
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  border-radius: 8px;
+}
+
+.code-editor:focus-within {
+  border-color: #8B5CF6;
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.debugging-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    #A855F7, 
+    #C084FC, 
+    #8B5CF6, 
+    transparent
+  );
+  opacity: 0.5;
+}
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background: linear-gradient(135deg, #4A1B6B 0%, #5B2A7F 100%);
+  min-height: 100vh;
+  position: relative;
+}
+
+.page-container {
+  min-height: 100vh;
+  position: relative;
+  padding-top: 70px; 
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding-top: 60px; 
+  }
+}
+
+.home-page {
+  min-height: 100vh;
+}
+
+.hero-section {
+  padding-top: 40px; 
+}
+
+@supports (padding: max(0px)) {
+  .navbar {
+    padding-top: max(10px, env(safe-area-inset-top));
+    height: calc(var(--navbar-height-desktop) + env(safe-area-inset-top));
+  }
+  
+  @media (max-width: 768px) {
+    .navbar {
+      height: calc(var(--navbar-height-mobile) + env(safe-area-inset-top));
+    }
+    
+    .navbar-spacer {
+      height: calc(var(--navbar-height-mobile) + env(safe-area-inset-top));
+    }
+    
+    .nav-links {
+      top: calc(var(--navbar-height-mobile) + env(safe-area-inset-top));
+    }
+    
+    .mobile-menu-overlay {
+      top: calc(var(--navbar-height-mobile) + env(safe-area-inset-top));
+    }
+  }
 }

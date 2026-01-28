@@ -14,13 +14,11 @@ function DashboardPage() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Check if user has made a language/level choice
     const hasChosen = localStorage.getItem('debuggingChoice')
     if (!hasChosen) {
       setShowLanguageModal(true)
     }
     
-    // Load progress from localStorage (simulated)
     const savedProgress = localStorage.getItem('userProgress')
     if (savedProgress) {
       setUserProgress(JSON.parse(savedProgress))
@@ -28,7 +26,6 @@ function DashboardPage() {
   }, [])
 
   const handleLogout = () => {
-    // Clear user data and redirect
     localStorage.removeItem('debuggingChoice')
     localStorage.removeItem('userProgress')
     navigate('/')
@@ -42,6 +39,10 @@ function DashboardPage() {
     setShowLanguageModal(false)
     localStorage.setItem('debuggingChoice', JSON.stringify(choice))
     navigate('/debugging')
+  }
+
+  const handleCloseModal = () => {
+    setShowLanguageModal(false)
   }
 
   return (
@@ -101,7 +102,10 @@ function DashboardPage() {
       </div>
       
       {showLanguageModal && (
-        <LanguageLevelModal onComplete={handleChoiceComplete} />
+        <LanguageLevelModal 
+          onComplete={handleChoiceComplete} 
+          onClose={handleCloseModal}  
+        />
       )}
     </div>
   )

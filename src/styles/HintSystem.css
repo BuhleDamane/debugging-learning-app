@@ -4,32 +4,43 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(10, 10, 15, 0.95); 
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   animation: fadeIn 0.3s ease;
+  backdrop-filter: blur(10px);
+  padding: 20px;
+  overflow-y: auto;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
+    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
+    backdrop-filter: blur(10px);
   }
 }
 
 .warning-modal,
-.hint-modal {
-  background: white;
+.hint-modal,
+.success-modal {
+  background: rgba(30, 20, 50, 0.98); 
   border-radius: 20px;
   padding: 40px;
   max-width: 500px;
   width: 90%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(168, 85, 247, 0.3);
   animation: slideUp 0.3s ease;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s ease;
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 @keyframes slideUp {
@@ -44,31 +55,53 @@
 }
 
 .warning-modal h3,
-.hint-modal h3 {
+.hint-modal h3,
+.success-modal h3 {
   font-size: 1.8rem;
-  color: #1e293b;
+  color: #FFFFFF;
   margin-bottom: 20px;
   font-weight: 800;
   text-align: center;
+  text-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+  line-height: 1.3;
+  transition: font-size 0.3s ease;
 }
 
-.warning-modal p {
-  color: #64748b;
+.warning-modal h3::after,
+.hint-modal h3::after,
+.success-modal h3::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 4px;
+  background: linear-gradient(90deg, #A855F7, #C084FC);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  transition: all 0.3s ease;
+}
+
+.warning-modal p,
+.hint-modal p,
+.success-modal p {
+  color: #C084FC;
   font-size: 1.1rem;
   line-height: 1.6;
   text-align: center;
   margin-bottom: 30px;
+  transition: all 0.3s ease;
 }
 
 .warning-buttons {
   display: flex;
   gap: 15px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .btn-cancel,
 .btn-understood,
-.btn-okay {
+.btn-okay,
+.btn-success {
   padding: 14px 30px;
   border: none;
   border-radius: 10px;
@@ -76,62 +109,670 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 140px;
+  white-space: nowrap;
+  flex: 1;
 }
 
 .btn-cancel {
-  background: #e2e8f0;
-  color: #475569;
+  background: rgba(45, 27, 78, 0.8); 
+  color: #C084FC;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .btn-cancel:hover {
-  background: #cbd5e1;
+  background: rgba(30, 20, 50, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  border-color: rgba(168, 85, 247, 0.5);
 }
 
 .btn-understood,
 .btn-okay {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #8B5CF6 0%, #9333EA 100%);
   color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
 
 .btn-understood:hover,
 .btn-okay:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
+  background: linear-gradient(135deg, #7C3AED 0%, #822CE9 100%);
 }
 
 .hint-content {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(192, 132, 252, 0.15) 100%);
   padding: 25px;
   border-radius: 12px;
   margin-bottom: 30px;
+  border: 1px solid rgba(168, 85, 247, 0.2);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
 }
 
 .hint-content p {
-  color: #78350f;
+  color: #F59E0B;
   font-size: 1.1rem;
   line-height: 1.8;
   margin: 0;
 }
 
-@media (max-width: 768px) {
+.warning-icon {
+  text-align: center;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.warning-icon i {
+  font-size: 3rem;
+  color: #EF4444;
+  background: rgba(239, 68, 68, 0.1);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  transition: all 0.3s ease;
+}
+
+
+.hint-icon {
+  text-align: center;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.hint-icon i {
+  font-size: 3rem;
+  color: #F59E0B;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 191, 36, 0.1));
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(245, 158, 11, 0.3);
+  transition: all 0.3s ease;
+}
+
+.success-modal {
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.3);
+}
+
+.success-icon {
+  text-align: center;
+  margin-bottom: 20px;
+  transition: all 0.3s ease;
+}
+
+.success-icon i {
+  font-size: 3rem;
+  color: #10B981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.1));
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(16, 185, 129, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #0DA977 0%, #04875B 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+}
+
+.modal-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: #C084FC;
+  font-size: 1.5rem;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.modal-close:hover {
+  background: rgba(168, 85, 247, 0.1);
+  color: #FFFFFF;
+  transform: rotate(90deg);
+}
+
+@media (min-width: 1440px) {
   .warning-modal,
-  .hint-modal {
-    padding: 30px 20px;
-    width: 95%;
+  .hint-modal,
+  .success-modal {
+    max-width: 550px;
+  }
+}
+
+@media (max-width: 1440px) {
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.7rem;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 1.05rem;
+  }
+  
+  .hint-content p {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 1024px) {
+  .modal-overlay {
+    padding: 15px;
+  }
+  
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    padding: 35px 30px;
+    width: 85%;
   }
   
   .warning-modal h3,
-  .hint-modal h3 {
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.6rem;
+  }
+  
+  .warning-modal h3::after,
+  .hint-modal h3::after,
+  .success-modal h3::after {
+    width: 50px;
+    height: 3px;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    width: 75px;
+    height: 75px;
+    font-size: 2.8rem;
+  }
+  
+  .hint-content {
+    padding: 22px;
+  }
+}
+
+@media (max-width: 900px) {
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    padding: 30px 25px;
+    width: 90%;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
     font-size: 1.5rem;
   }
   
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 1rem;
+    margin-bottom: 25px;
+  }
+  
   .warning-buttons {
-    flex-direction: column;
+    gap: 12px;
   }
   
   .btn-cancel,
   .btn-understood,
-  .btn-okay {
+  .btn-okay,
+  .btn-success {
+    padding: 13px 25px;
+    font-size: 0.95rem;
+    min-width: 120px;
+  }
+  
+  .modal-close {
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    font-size: 1.3rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 10px;
+    align-items: flex-start;
+    padding-top: 40px;
+  }
+  
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    padding: 30px 20px;
+    width: 95%;
+    max-height: 85vh;
+    margin: auto;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.4rem;
+    margin-bottom: 15px;
+  }
+  
+  .warning-modal h3::after,
+  .hint-modal h3::after,
+  .success-modal h3::after {
+    width: 45px;
+    height: 3px;
+    margin: 8px auto 0;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+  
+  .warning-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success {
     width: 100%;
+    min-width: 0;
+    padding: 14px 20px;
+    font-size: 1rem;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    font-size: 2.5rem;
+    width: 70px;
+    height: 70px;
+    margin-bottom: 15px;
+  }
+  
+  .hint-content {
+    padding: 20px;
+    margin-bottom: 25px;
+  }
+  
+  .hint-content p {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+  
+  .modal-close {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 576px) {
+  .modal-overlay {
+    padding: 5px;
+    padding-top: 30px;
+  }
+  
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    padding: 25px 18px;
+    border-radius: 16px;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.3rem;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    width: 65px;
+    height: 65px;
+    font-size: 2.2rem;
+    border-width: 1.5px;
+  }
+  
+  .hint-content {
+    padding: 18px;
+    border-radius: 10px;
+  }
+  
+  .hint-content p {
+    font-size: 0.95rem;
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success {
+    padding: 13px 18px;
+    font-size: 0.95rem;
+    border-radius: 8px;
+  }
+  
+  .modal-close {
+    top: 10px;
+    right: 10px;
+  }
+}
+
+@media (max-width: 425px) {
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    padding: 22px 15px;
+    width: 98%;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.2rem;
+  }
+  
+  .warning-modal h3::after,
+  .hint-modal h3::after,
+  .success-modal h3::after {
+    width: 40px;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 0.85rem;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .hint-content p {
+    font-size: 0.9rem;
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success {
+    padding: 12px 16px;
+    font-size: 0.9rem;
+  }
+  
+  .modal-close {
+    width: 30px;
+    height: 30px;
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 375px) {
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    padding: 20px 12px;
+    border-radius: 14px;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.1rem;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 0.8rem;
+    line-height: 1.4;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    width: 55px;
+    height: 55px;
+    font-size: 1.8rem;
+  }
+  
+  .hint-content {
+    padding: 15px;
+  }
+  
+  .hint-content p {
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success {
+    padding: 11px 14px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .btn-cancel:hover,
+  .btn-understood:hover,
+  .btn-okay:hover,
+  .btn-success:hover,
+  .modal-close:hover {
+    transform: none;
+  }
+  
+  .btn-cancel:active,
+  .btn-understood:active,
+  .btn-okay:active,
+  .btn-success:active {
+    transform: scale(0.98);
+  }
+  
+  .modal-close:active {
+    transform: rotate(90deg);
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success,
+  .modal-close {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .modal-overlay {
+    background: rgba(5, 5, 10, 0.97);
+  }
+}
+
+@media print {
+  .modal-overlay {
+    position: relative;
+    background: white !important;
+    padding: 0;
+    backdrop-filter: none !important;
+  }
+  
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    background: white !important;
+    border: 2px solid #333 !important;
+    box-shadow: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    max-height: none !important;
+    page-break-inside: avoid;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    color: black !important;
+    text-shadow: none !important;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p,
+  .hint-content p {
+    color: #333 !important;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    color: #333 !important;
+    background: #f5f5f5 !important;
+    border-color: #ccc !important;
+  }
+  
+  .hint-content {
+    background: #f9f9f9 !important;
+    border-color: #ddd !important;
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success,
+  .modal-close {
+    display: none;
+  }
+}
+
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    border-width: 0.5px;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    border-width: 1.5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    animation: none;
+  }
+  
+  .btn-cancel,
+  .btn-understood,
+  .btn-okay,
+  .btn-success,
+  .modal-close {
+    transition: none;
+  }
+  
+  .btn-cancel:hover,
+  .btn-understood:hover,
+  .btn-okay:hover,
+  .btn-success:hover,
+  .modal-close:hover {
+    transform: none;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  .modal-overlay {
+    align-items: flex-start;
+    padding-top: 10px;
+  }
+  
+  .warning-modal,
+  .hint-modal,
+  .success-modal {
+    max-height: 80vh;
+    overflow-y: auto;
+    margin-top: 10px;
+  }
+  
+  .warning-modal h3,
+  .hint-modal h3,
+  .success-modal h3 {
+    font-size: 1.2rem;
+  }
+  
+  .warning-modal p,
+  .hint-modal p,
+  .success-modal p {
+    font-size: 0.9rem;
+    margin-bottom: 15px;
+  }
+  
+  .warning-icon i,
+  .hint-icon i,
+  .success-icon i {
+    width: 50px;
+    height: 50px;
+    font-size: 1.8rem;
   }
 }
