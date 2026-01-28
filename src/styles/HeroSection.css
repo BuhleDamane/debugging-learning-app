@@ -637,11 +637,13 @@
 @media (max-width: 425px) {
   .hero-section {
     padding: 40px 12px;
+   
   }
   
   .hero-container {
     padding: 0 10px;
     gap: 30px;
+    
   }
   
   .hero-title {
