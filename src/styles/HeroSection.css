@@ -5,7 +5,7 @@
   position: relative;
   overflow: hidden;
   transition: padding 0.3s ease;
-   margin-top: 50px;
+   
 }
 
 .hero-section::before {
@@ -572,6 +572,7 @@
 @media (max-width: 576px) {
   .hero-section {
     padding: 50px 15px;
+    margin-top: 50px;
   }
   
   .hero-container {
