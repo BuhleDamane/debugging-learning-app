@@ -6,20 +6,29 @@ import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import DebuggingPage from './pages/DebuggingPage'
 import Contact from './pages/Contact'
-import Navbar from './components/Navbar'  
+import Navbar from './components/Navbar'
+import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
   return (
     <Router>
       <div className="App">
-        <Navbar />  {}
+        <Navbar />
         <Toaster position="top-right" />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/contact" element={<Contact />} />
-          <Route path="/debugging" element={<DebuggingPage />} />
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
+              <DashboardPage />
+            </ProtectedRoute>
+          } />
+          <Route path="/debugging" element={
+            <ProtectedRoute>
+              <DebuggingPage />
+            </ProtectedRoute>
+          } />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </div>

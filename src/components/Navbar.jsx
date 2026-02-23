@@ -117,7 +117,7 @@ function Navbar({ onLogout }) {
   }
 
   const getNavLinks = () => {
-    const isAuthenticated = location.pathname === '/dashboard' || location.pathname === '/debugging';
+    const isAuthenticated = location.pathname === '/dashboard' || location.pathname === '/debugging'
     
     if (isAuthenticated) {
       return (
@@ -134,7 +134,7 @@ function Navbar({ onLogout }) {
           <button 
             className="nav-link logout" 
             onClick={() => {
-              if (onLogout) onLogout();
+              if (onLogout) onLogout()
               navigate('/')
               closeMobileMenu()
             }}
@@ -159,7 +159,7 @@ function Navbar({ onLogout }) {
         <button 
           className="nav-link login" 
           onClick={() => {
-            navigate('/debugging')
+            navigate('/login', { state: { showSignup: false } })
             closeMobileMenu()
           }}
         >
@@ -171,10 +171,10 @@ function Navbar({ onLogout }) {
 
   const getLogoClass = () => {
     switch(logoState) {
-      case 'spinning': return 'logo-spinning';
-      case 'exploding': return 'logo-exploding';
-      case 'complete': return 'logo-complete';
-      default: return '';
+      case 'spinning': return 'logo-spinning'
+      case 'exploding': return 'logo-exploding'
+      case 'complete': return 'logo-complete'
+      default: return ''
     }
   }
 

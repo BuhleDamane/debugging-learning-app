@@ -4,6 +4,23 @@ import Sidebar from '../components/Sidebar'
 import Navbar from '../components/Navbar'
 import LanguageLevelModal from '../components/modals/LanguageLevelModal'
 import '../styles/DashboardPage.css'
+import { useAuth } from '../context/AuthContext'
+
+function formatName(rawName) {
+  if (!rawName) return 'User'
+  
+  return rawName
+    .replace(/[.,]/g, '')           
+    .split(' ')
+    .filter(Boolean)
+    .map(word => {
+     
+      return word
+        .toLowerCase()
+        .replace(/^[a-z']/, (char) => char.toUpperCase())
+    })
+    .join(' ')
+}
 
 function DashboardPage() {
   const [showLanguageModal, setShowLanguageModal] = useState(false)
@@ -12,6 +29,10 @@ function DashboardPage() {
     react: 0
   })
   const navigate = useNavigate()
+  const { currentUser } = useAuth()
+
+  const displayName = formatName(currentUser?.displayName)
+  const firstName = displayName.split(' ')[0]
 
   useEffect(() => {
     const hasChosen = localStorage.getItem('debuggingChoice')
@@ -53,7 +74,7 @@ function DashboardPage() {
         
         <main className="dashboard-main">
           <div className="welcome-section">
-            <h1>Welcome User</h1>
+            <h1>Welcome, <span className="highlight">{firstName}</span> 👋</h1>
             <p>Are you ready to master debugging?</p>
           </div>
           

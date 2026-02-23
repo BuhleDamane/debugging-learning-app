@@ -481,3 +481,32 @@
     padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
 }
+
+.success-message {
+  background-color: #1a3a2a;
+  color: #4ade80;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border: 1px solid #4ade80;
+}
+
+.error-message {
+  background-color: #3a1a1a;
+  color: #f87171;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  border: 1px solid #f87171;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+}
+
+.form-row .form-group {
+  flex: 1;
+}

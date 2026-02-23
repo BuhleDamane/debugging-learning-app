@@ -17,11 +17,11 @@ function HomePage() {
       <div className="cta-section">
         <h2>Start Your Debugging Journey</h2>
         <div className="cta-buttons">
-          <button className="btn-primary" onClick={() => navigate('/login')}>
+          <button className="btn-primary" onClick={() => navigate('/login', { state: { showSignup: false } })}>
             Get Debugging
           </button>
           <button className="btn-secondary" onClick={() => navigate('/contact')}>
-           contact Us
+            Contact Us
           </button>
         </div>
       </div>

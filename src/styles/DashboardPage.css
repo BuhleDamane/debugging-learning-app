@@ -133,6 +133,8 @@
   background-clip: text;
   margin-bottom: 15px;
   transition: font-size 0.3s ease;
+   text-align: center;     
+  width: 100%;      
 }
 
 .stat-description {
