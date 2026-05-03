@@ -924,6 +924,25 @@
   box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
 }
 
+.btn-try-again {
+  background: transparent;
+  color: #F87171;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  border: 2px solid rgba(248, 113, 113, 0.4);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 5px;
+}
+
+.btn-try-again:hover {
+  background: rgba(248, 113, 113, 0.1);
+  border-color: rgba(248, 113, 113, 0.7);
+  transform: translateY(-2px);
+}
+
 @media (max-width: 576px) {
   .validation-result-panel {
     flex-direction: column;
