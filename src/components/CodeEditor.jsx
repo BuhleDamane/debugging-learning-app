@@ -1,15 +1,16 @@
 import React from 'react'
 import '../styles/CodeEditor.css'
 
-function CodeEditor({ 
-  title, 
-  code, 
-  onChange, 
-  readOnly, 
-  language, 
-  button, 
-  onCopy, 
-  onPaste 
+function CodeEditor({
+  title,
+  code,
+  onChange,
+  readOnly,
+  language,
+  button,
+  onCopy,
+  onPaste,
+  placeholder,
 }) {
   const handleChange = (e) => {
     if (!readOnly && onChange) {
@@ -23,7 +24,7 @@ function CodeEditor({
         <h4>{title}</h4>
         <div className="editor-actions">
           <span className="language-badge">{language || 'javascript'}</span>
-          <button 
+          <button
             className={`btn-generate ${button.color}`}
             onClick={button.onClick}
             disabled={button.disabled}
@@ -32,7 +33,7 @@ function CodeEditor({
           </button>
         </div>
       </div>
-      
+
       <textarea
         className="code-textarea"
         value={code}
@@ -41,18 +42,18 @@ function CodeEditor({
         onCopy={onCopy}
         onPaste={onPaste}
         spellCheck="false"
-        style={{ 
+        placeholder={placeholder || ''}
+        style={{
           cursor: readOnly ? 'not-allowed' : 'text',
-          backgroundColor: readOnly ? '#f5f5f5' : 'white'
         }}
       />
-      
+
       <div className="editor-footer">
         <span className="line-count">
-          Lines: {code.split('\n').length}
+          Lines: {code ? code.split('\n').length : 1}
         </span>
         <span className="char-count">
-          Characters: {code.length}
+          Characters: {code ? code.length : 0}
         </span>
       </div>
     </div>
