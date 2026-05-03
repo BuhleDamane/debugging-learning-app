@@ -77,19 +77,26 @@ function DashboardPage() {
 
           <div className="dashboard-content">
             <div className="stats-cards">
-              {progressCards.map(({ key, label }) => (
-                <div className="stat-card" key={key}>
-                  <h3>{label}</h3>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-fill"
-                      style={{ width: `${userProgress[key] || 0}%` }}
-                    >
-                      {userProgress[key] || 0}%
+              {progressCards.map(({ key, label }) => {
+                const pct = userProgress[key] || 0
+                return (
+                  <div className="stat-card" key={key}>
+                    <h3>{label}</h3>
+                    <div className="progress-bar">
+                      {pct > 0 ? (
+                        <div
+                          className="progress-fill"
+                          style={{ width: `${pct}%` }}
+                        >
+                          {pct}%
+                        </div>
+                      ) : (
+                        <div className="progress-empty">0%</div>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
 
             <div className="action-section">
