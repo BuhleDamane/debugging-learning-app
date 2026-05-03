@@ -1,104 +1,61 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { toast } from 'react-hot-toast'
 import Navbar from '../components/Navbar'
 import CodeEditor from '../components/CodeEditor'
 import HintSystem from '../components/HintSystem'
 import LanguageLevelModal from '../components/modals/LanguageLevelModal'
 import '../styles/DebuggingPage.css'
 
-function DebuggingPage() {
-  const [brokenCode, setBrokenCode] = useState('// Code will be generated here...')
-  const [userCode, setUserCode] = useState('// Fix the broken code here...')
-  const [isValidating, setIsValidating] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [showConfetti, setShowConfetti] = useState(false)
-  const [hints, setHints] = useState([])
-  const [showHintWarning, setShowHintWarning] = useState(false)
-  const [currentChoice, setCurrentChoice] = useState(null)
-  const [showLanguageModal, setShowLanguageModal] = useState(false)
-  const navigate = useNavigate()
+// ── Anthropic API helper ──────────────────────────────────────────────────────
+async function callClaude(prompt) {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }],
+    }),
+  })
 
-  useEffect(() => {
-    const choice = localStorage.getItem('debuggingChoice')
-    if (choice) {
-      setCurrentChoice(JSON.parse(choice))
-    }
-    
-    setHints([
-      { id: 1, text: '', used: false },
-      { id: 2, text: '', used: false },
-      { id: 3, text: '', used: false }
-    ])
-  }, [])
-
-  const handleLanguageSelection = (choice) => {
-    setCurrentChoice(choice)
-    localStorage.setItem('debuggingChoice', JSON.stringify(choice))
-    setShowLanguageModal(false)
-    toast.success(`Selected ${choice.language.toUpperCase()} - ${choice.level.toUpperCase()}`)
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}))
+    throw new Error(err?.error?.message || `API error ${response.status}`)
   }
 
-  const generateCode = async () => {
-    if (!currentChoice) {
-      toast.error('Please select a language and level first')
-      return
-    }
+  const data = await response.json()
+  return data.content
+    .filter((b) => b.type === 'text')
+    .map((b) => b.text)
+    .join('')
+    .trim()
+}
 
-    setIsGenerating(true)
-    
-    try {
-      const HF_API_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE'
-      
-      if (HF_API_TOKEN === 'YOUR_HUGGING_FACE_TOKEN_HERE') {
-        toast.error('Please add your Hugging Face token! It\'s FREE - get it at huggingface.co/settings/tokens')
-        setIsGenerating(false)
-        return
-      }
+// ── Language-specific fallback snippets ───────────────────────────────────────
+const FALLBACKS = {
+  javascript: {
+    code: `// Bug: Wrong operator used — should add, not subtract
+function calculateSum(a, b) {
+  return a - b
+}
 
-      const response = await fetch(
-        'https://api-inference.huggingface.co/models/microsoft/Phi-3.5-mini-instruct',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${HF_API_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            inputs: `Generate a ${currentChoice.language || 'JavaScript'} code snippet with 2-3 intentional bugs for ${currentChoice.level || 'beginner'} level debugging practice. Include comments explaining what the code should do. Make the bugs realistic. Only return the code, no explanations. Keep it under 15 lines.`,
-            parameters: {
-              max_new_tokens: 250,
-              temperature: 0.7,
-              return_full_text: false
-            }
-          })
-        }
-      )
-      
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      
-      if (data && data[0] && data[0].generated_text) {
-        const generatedCode = data[0].generated_text.trim()
-        setBrokenCode(generatedCode)
-        toast.success('Code generated successfully!')
-        
-        await generateHints(generatedCode)
-      } else {
-        throw new Error('Unexpected API response format')
-      }
-    } catch (error) {
-      console.error('Error generating code:', error)
-      toast.error(`Failed to generate code: ${error.message}`)
-      
-      const fallbackCode = currentChoice.language === 'react' 
-        ? `import React from 'react'
+const result = calculateSum(5, 3)
+console.log(result) // Expected: 8, Actual: 2`,
+    hints: [
+      'There is an arithmetic issue inside calculateSum.',
+      'The operator used is not the right one for addition.',
+      "Change '-' to '+' inside calculateSum to fix the bug.",
+    ],
+  },
+  react: {
+    code: `import React from 'react'
 
+// Bug 1: useState is not imported
+// Bug 2: onClick decrements instead of incrementing
 function Counter() {
   const [count, setCount] = useState(0)
-  
+
   return (
     <div>
       <h1>Count: {count}</h1>
@@ -107,119 +64,184 @@ function Counter() {
   )
 }
 
-export default Counter`
-        : `function calculateSum(a, b) {
-  return a - b
+export default Counter`,
+    hints: [
+      'Check whether all required React hooks are imported.',
+      "Look at the button label vs what the onClick actually does — do they match?",
+      "Add '{ useState }' to the React import and change 'count - 1' to 'count + 1'.",
+    ],
+  },
+  python: {
+    code: `# Bug: range() stops before the last number, so the last item is skipped
+def sum_list(numbers):
+    total = 0
+    for i in range(len(numbers) - 1):  # off-by-one error
+        total += numbers[i]
+    return total
+
+numbers = [1, 2, 3, 4, 5]
+print(sum_list(numbers))  # Expected: 15, Actual: 10`,
+    hints: [
+      'There is an issue with the loop bounds in sum_list.',
+      'The range() call does not cover all elements of the list.',
+      "Change 'range(len(numbers) - 1)' to 'range(len(numbers))' to iterate over every item.",
+    ],
+  },
 }
 
-const result = calculateSum(5, 3)
-console.log(result) // Expected: 8, Actual: 2`
+// ── Component ─────────────────────────────────────────────────────────────────
+function DebuggingPage() {
+  const [brokenCode, setBrokenCode] = useState('')
+  const [userCode, setUserCode] = useState('')
+  const [isValidating, setIsValidating] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const [hints, setHints] = useState([
+    { id: 1, text: '', used: false },
+    { id: 2, text: '', used: false },
+    { id: 3, text: '', used: false },
+  ])
+  const [showHintWarning, setShowHintWarning] = useState(false)
+  const [currentChoice, setCurrentChoice] = useState(null)
+  const [showLanguageModal, setShowLanguageModal] = useState(false)
+  const navigate = useNavigate()
 
-      setBrokenCode(fallbackCode)
-      
-      const fallbackHints = currentChoice.language === 'react'
-        ? [
-            { id: 1, text: "Check if all required React hooks are properly imported", used: false },
-            { id: 2, text: "Look at the button's onClick handler - does it match the button label?", used: false },
-            { id: 3, text: "Add 'import { useState } from \"react\"' and change count - 1 to count + 1", used: false }
-          ]
-        : [
-            { id: 1, text: "There's an arithmetic operation issue in the calculateSum function", used: false },
-            { id: 2, text: "The operator used is incorrect for addition", used: false },
-            { id: 3, text: "Change the '-' operator to '+' in the calculateSum function", used: false }
-          ]
-      
-      setHints(fallbackHints)
+  useEffect(() => {
+    const choice = localStorage.getItem('debuggingChoice')
+    if (choice) setCurrentChoice(JSON.parse(choice))
+  }, [])
+
+  // ── Language display label ──────────────────────────────────────────────────
+  const languageLabel = (lang) => {
+    if (!lang) return ''
+    return lang === 'react' ? 'React (JSX)' : lang.charAt(0).toUpperCase() + lang.slice(1)
+  }
+
+  // ── AI: generate buggy code ─────────────────────────────────────────────────
+  const generateCode = async () => {
+    if (!currentChoice) {
+      toast.error('Please select a language and level first.')
+      return
+    }
+
+    setIsGenerating(true)
+    setBrokenCode('')
+    setUserCode('')
+    setHints([
+      { id: 1, text: '', used: false },
+      { id: 2, text: '', used: false },
+      { id: 3, text: '', used: false },
+    ])
+
+    const { language, level } = currentChoice
+
+    const codePrompt = `You are a coding challenge generator for a debugging practice app.
+
+Generate a ${languageLabel(language)} code snippet with exactly 2–3 intentional bugs suitable for a ${level} difficulty level.
+
+Rules:
+- Return ONLY the raw code — no markdown, no backticks, no explanations.
+- Add a short comment at the very top describing what the code is SUPPOSED to do.
+- Bugs should be realistic and varied (e.g. wrong operator, missing import, off-by-one, wrong variable name, logic error).
+- Keep it under 20 lines.
+- For "easy": simple, obvious bugs. For "medium": subtler bugs. For "hard": tricky logic bugs.
+${language === 'react' ? '- Use functional components with hooks.' : ''}
+${language === 'python' ? '- Use standard Python 3 syntax only.' : ''}`
+
+    try {
+      const generated = await callClaude(codePrompt)
+      setBrokenCode(generated)
+      toast.success('Code generated! Find and fix the bugs.')
+      await generateHints(generated, language, level)
+    } catch (error) {
+      console.error('Code generation failed:', error)
+      toast.error('AI unavailable — loaded a fallback challenge.')
+      const fallback = FALLBACKS[language] || FALLBACKS.javascript
+      setBrokenCode(fallback.code)
+      setHints(
+        fallback.hints.map((text, i) => ({ id: i + 1, text, used: false }))
+      )
     } finally {
       setIsGenerating(false)
     }
   }
 
-  const generateHints = async (code) => {
-    try {
-      const HF_API_TOKEN = 'YOUR_HUGGING_FACE_TOKEN_HERE'
-      
-      if (HF_API_TOKEN === 'YOUR_HUGGING_FACE_TOKEN_HERE') {
-        return
-      }
+  // ── AI: generate 3 progressive hints ───────────────────────────────────────
+  const generateHints = async (code, language, level) => {
+    const hintPrompt = `You are a debugging coach.
 
-      const response = await fetch(
-        'https://api-inference.huggingface.co/models/microsoft/Phi-3.5-mini-instruct',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${HF_API_TOKEN}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            inputs: `For this buggy code:\n${code}\n\nGenerate exactly 3 progressive debugging hints in this format:\nHint 1: [vague hint about general area]\nHint 2: [more specific hint]\nHint 3: [specific solution]\n\nOnly return the hints, nothing else.`,
-            parameters: {
-              max_new_tokens: 150,
-              temperature: 0.5,
-              return_full_text: false
-            }
-          })
-        }
-      )
-      
-      if (response.ok) {
-        const data = await response.json()
-        const hintsText = data[0].generated_text
-        
-        const hintLines = hintsText.split('\n').filter(line => line.trim().startsWith('Hint'))
-        const parsedHints = hintLines.slice(0, 3).map((line, index) => ({
-          id: index + 1,
-          text: line.replace(/^Hint \d+:\s*/, ''),
-          used: false
-        }))
-        
-        if (parsedHints.length === 3) {
-          setHints(parsedHints)
-        }
+Given this buggy ${languageLabel(language)} code:
+\`\`\`
+${code}
+\`\`\`
+
+Generate exactly 3 progressive hints for a ${level} level student.
+- Hint 1: Vague — point to the general area of the problem without naming it.
+- Hint 2: More specific — describe the type of bug without giving the fix.
+- Hint 3: Direct — explain exactly what to change.
+
+Respond with ONLY this format and nothing else:
+Hint 1: <text>
+Hint 2: <text>
+Hint 3: <text>`
+
+    try {
+      const raw = await callClaude(hintPrompt)
+      const lines = raw.split('\n').filter((l) => /^Hint \d:/.test(l.trim()))
+      if (lines.length === 3) {
+        setHints(
+          lines.map((line, i) => ({
+            id: i + 1,
+            text: line.replace(/^Hint \d:\s*/, '').trim(),
+            used: false,
+          }))
+        )
       }
     } catch (error) {
-      console.error('Error generating hints:', error)
+      console.error('Hint generation failed:', error)
+      // Keep blank hints — not critical
     }
   }
 
+  // ── Validate user's solution ────────────────────────────────────────────────
   const validateCode = () => {
+    if (!userCode.trim()) {
+      toast.error('Please write your solution before validating!')
+      return
+    }
+
     setIsValidating(true)
-    
+
     setTimeout(() => {
-      if (userCode !== '// Fix the broken code here...') {
-        setShowConfetti(true)
-        toast.success('Congratulations! Code validated successfully!')
-        
-        updateUserProgress()
-        
-        setTimeout(() => {
-          setShowConfetti(false)
-          const goNext = window.confirm('Great job! Would you like to try another challenge?')
-          if (goNext) {
-            navigate('/dashboard')
-          }
-        }, 3000)
-      } else {
-        toast.error('Please write some code before validating!')
-      }
-      
+      setShowConfetti(true)
+      toast.success('Congratulations! Code validated successfully!')
+      updateUserProgress()
+
+      setTimeout(() => {
+        setShowConfetti(false)
+        const goNext = window.confirm('Great job! Would you like to try another challenge?')
+        if (goNext) navigate('/dashboard')
+      }, 3000)
+
       setIsValidating(false)
     }, 1000)
   }
 
   const updateUserProgress = () => {
-    const savedProgress = localStorage.getItem('userProgress')
-    const progress = savedProgress ? JSON.parse(savedProgress) : { javascript: 0, react: 0 }
-    
-    if (currentChoice?.language === 'javascript') {
-      progress.javascript = Math.min(100, progress.javascript + 10)
-    } else if (currentChoice?.language === 'react') {
-      progress.react = Math.min(100, progress.react + 10)
+    const saved = localStorage.getItem('userProgress')
+    const progress = saved
+      ? JSON.parse(saved)
+      : { javascript: 0, react: 0, python: 0 }
+
+    const lang = currentChoice?.language
+    if (lang && progress[lang] !== undefined) {
+      progress[lang] = Math.min(100, (progress[lang] || 0) + 10)
     }
-    
+
     localStorage.setItem('userProgress', JSON.stringify(progress))
   }
 
+  // ── Navigation / UI helpers ─────────────────────────────────────────────────
   const handleBack = () => {
     if (window.confirm('Are you sure you want to go back? Your current progress will not be saved.')) {
       localStorage.removeItem('debuggingChoice')
@@ -228,7 +250,7 @@ console.log(result) // Expected: 8, Actual: 2`
   }
 
   const handleHintClick = () => {
-    if (!hints.some(h => h.used)) {
+    if (!hints.some((h) => h.used)) {
       setShowHintWarning(true)
     } else {
       useHint()
@@ -236,13 +258,12 @@ console.log(result) // Expected: 8, Actual: 2`
   }
 
   const useHint = () => {
-    const availableHint = hints.find(h => !h.used)
+    const availableHint = hints.find((h) => !h.used)
     if (availableHint) {
-      const updatedHints = hints.map(h => 
-        h.id === availableHint.id ? { ...h, used: true } : h
-      )
-      setHints(updatedHints)
+      setHints(hints.map((h) => (h.id === availableHint.id ? { ...h, used: true } : h)))
       toast(`Hint ${availableHint.id}: ${availableHint.text}`, { duration: 6000 })
+    } else {
+      toast.error('No more hints available!')
     }
   }
 
@@ -256,29 +277,33 @@ console.log(result) // Expected: 8, Actual: 2`
     toast.error('Pasting is disabled! Please type the code manually.')
   }
 
-  const handleStartDebugging = () => {
-    setShowLanguageModal(true)
+  const handleLanguageSelection = (choice) => {
+    setCurrentChoice(choice)
+    localStorage.setItem('debuggingChoice', JSON.stringify(choice))
+    setShowLanguageModal(false)
+    toast.success(`Selected ${choice.language.toUpperCase()} — ${choice.level.toUpperCase()}`)
   }
 
+  const hintsUsed = hints.filter((h) => h.used).length
+
+  // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div className="debugging-page">
       <Navbar />
-      
+
       <div className="debugging-container">
         {!currentChoice ? (
           <div className="welcome-section start-screen">
             <h1>Welcome to Debugging Challenge</h1>
-            <p className="modal-subtitle">Test your debugging skills with real-world code problems</p>
-            
-          
-            
-            <button 
+            <p className="modal-subtitle">
+              Test your debugging skills with AI-generated code problems
+            </p>
+            <button
               className="btn-start-debugging"
-              onClick={handleStartDebugging}
+              onClick={() => setShowLanguageModal(true)}
             >
               Start Debugging Challenge
             </button>
-            
             <p className="instruction-text">
               Click above to select your language and difficulty level
             </p>
@@ -286,37 +311,39 @@ console.log(result) // Expected: 8, Actual: 2`
         ) : (
           <>
             <div className="welcome-section">
-              <h1>Welcome User</h1>
-              <p>Are you ready to master debugging?</p>
+              <h1>Debugging Challenge</h1>
+              <p>Find and fix all the bugs in the generated code!</p>
               <div className="current-selection">
-                <span className="badge">{currentChoice?.language?.toUpperCase()}</span>
+                <span className="badge">{languageLabel(currentChoice?.language)}</span>
                 <span className="badge">{currentChoice?.level?.toUpperCase()}</span>
-                <button 
+                <button
                   className="btn-change-selection"
                   onClick={() => {
                     localStorage.removeItem('debuggingChoice')
                     setCurrentChoice(null)
+                    setBrokenCode('')
+                    setUserCode('')
                   }}
                 >
                   Change Selection
                 </button>
               </div>
             </div>
-            
+
             <div className="action-buttons">
               <button className="btn-back" onClick={handleBack}>
                 Back to Dashboard
               </button>
-              <button 
-                className="btn-hint" 
+              <button
+                className="btn-hint"
                 onClick={handleHintClick}
-                disabled={hints.filter(h => h.used).length >= 3}
+                disabled={hintsUsed >= 3}
               >
-                Hint ({3 - hints.filter(h => h.used).length} remaining)
+                Hint ({3 - hintsUsed} remaining)
               </button>
             </div>
-            
-            <HintSystem 
+
+            <HintSystem
               showWarning={showHintWarning}
               onCloseWarning={() => setShowHintWarning(false)}
               onAcceptWarning={() => {
@@ -325,32 +352,33 @@ console.log(result) // Expected: 8, Actual: 2`
               }}
               hints={hints}
             />
-            
+
             <div className="code-editors-container">
               <CodeEditor
-                title="Broken Code"
+                title="🐛 Broken Code"
                 code={brokenCode}
                 readOnly={true}
                 language={currentChoice?.language}
                 button={{
-                  text: isGenerating ? 'Generating...' : 'Generate Code',
+                  text: isGenerating ? 'Generating...' : brokenCode ? 'Regenerate' : 'Generate Code',
                   onClick: generateCode,
                   color: 'blue',
-                  disabled: isGenerating
+                  disabled: isGenerating,
                 }}
               />
-              
+
               <CodeEditor
-                title="Your Solution"
+                title="✏️ Your Solution"
                 code={userCode}
                 onChange={setUserCode}
                 readOnly={false}
                 language={currentChoice?.language}
+                placeholder="Type your fixed code here..."
                 button={{
                   text: isValidating ? 'Validating...' : 'Validate Code',
                   onClick: validateCode,
                   color: 'green',
-                  disabled: userCode === '// Fix the broken code here...' || isValidating
+                  disabled: !userCode.trim() || isValidating,
                 }}
                 onCopy={handleCopy}
                 onPaste={handlePaste}
@@ -358,16 +386,16 @@ console.log(result) // Expected: 8, Actual: 2`
             </div>
           </>
         )}
-        
+
         {isValidating && (
           <div className="validation-overlay">
             <div className="spinner"></div>
             <p>Validating your code...</p>
           </div>
         )}
-        
+
         {showLanguageModal && (
-          <LanguageLevelModal 
+          <LanguageLevelModal
             onComplete={handleLanguageSelection}
             onClose={() => setShowLanguageModal(false)}
           />
