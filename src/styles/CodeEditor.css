@@ -43,7 +43,11 @@
   flex: 1;
   min-width: 200px;
 }
-
+.code-textarea::placeholder {
+  color: rgba(192, 132, 252, 0.3);   /* faint purple to match your theme */
+  font-style: italic;
+  font-family: 'Courier New', Courier, monospace;
+}
 .editor-actions {
   display: flex;
   align-items: center;
