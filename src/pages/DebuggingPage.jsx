@@ -7,8 +7,87 @@ import HintSystem from '../components/HintSystem'
 import LanguageLevelModal from '../components/modals/LanguageLevelModal'
 import '../styles/DebuggingPage.css'
 
+// ── Randomisation pools ───────────────────────────────────────────────────────
+const TOPICS = {
+  javascript: [
+    'a shopping cart that calculates total price with tax',
+    'a function that finds the largest number in an array',
+    'a countdown timer that logs seconds remaining',
+    'a to-do list that adds and removes items',
+    'a grade calculator that returns a letter grade',
+    'a string reversal function',
+    'a function that checks if a number is prime',
+    'a simple bank account with deposit and withdrawal',
+    'a function that removes duplicates from an array',
+    'a temperature converter between Celsius and Fahrenheit',
+    'a function that counts vowels in a string',
+    'a simple quiz that checks answers and scores points',
+    'a function that flattens a nested array',
+    'a password validator that checks length and special chars',
+    'a function that groups array items by a property',
+  ],
+  react: [
+    'a counter component with increment and decrement buttons',
+    'a toggle component that shows and hides a message',
+    'a form component that validates an email input',
+    'a list component that renders items and lets you delete them',
+    'a timer component that counts up every second',
+    'a colour picker that changes background colour on click',
+    'a search bar that filters a list of names',
+    'a simple accordion that expands and collapses sections',
+    'a character counter that warns when near the limit',
+    'a star rating component',
+    'a tabs component that switches between panels',
+    'a progress bar that fills based on a prop value',
+  ],
+  python: [
+    'a function that calculates the factorial of a number',
+    'a function that finds all even numbers in a list',
+    'a function that merges two sorted lists',
+    'a simple stack class with push and pop',
+    'a function that counts word frequency in a sentence',
+    'a function that checks if a string is a palindrome',
+    'a function that returns the nth Fibonacci number',
+    'a function that flattens a nested list',
+    'a function that converts Roman numerals to integers',
+    'a simple queue class with enqueue and dequeue',
+    'a function that finds the second largest number in a list',
+    'a function that checks if two strings are anagrams',
+    'a function that rotates a list by k positions',
+    'a function that calculates the GCD of two numbers',
+  ],
+}
+
+const BUG_TYPES = {
+  easy: [
+    'wrong arithmetic operator (e.g. subtraction instead of addition)',
+    'wrong comparison operator (e.g. > instead of >=)',
+    'off-by-one in a loop boundary',
+    'misspelled variable name',
+    'missing return statement',
+  ],
+  medium: [
+    'mutating the input array instead of working on a copy',
+    'wrong initial value for an accumulator variable',
+    'incorrect loop condition causing early exit',
+    'missing edge case handling for empty input',
+    'wrong array/string method used',
+  ],
+  hard: [
+    'subtle operator precedence issue',
+    'closure capturing the wrong variable in a loop',
+    'off-by-one that only fails on specific inputs',
+    'incorrect recursion base case',
+    'incorrect condition that fails for negative numbers',
+  ],
+}
+
+function pickRandom(arr) {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
 // ── Anthropic API helper ──────────────────────────────────────────────────────
-async function callClaude(prompt) {
+async function callClaude(prompt, temperature = 1) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -20,6 +99,7 @@ async function callClaude(prompt) {
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
+      temperature,
       messages: [{ role: 'user', content: prompt }],
     }),
   })
@@ -37,27 +117,44 @@ async function callClaude(prompt) {
     .trim()
 }
 
-// ── Language-specific fallback snippets ───────────────────────────────────────
+// ── Fallback snippets (used if API is unavailable) ────────────────────────────
 const FALLBACKS = {
-  javascript: {
-    code: `// Bug: Wrong operator used — should add, not subtract
+  javascript: [
+    {
+      code: `// Supposed to add two numbers and return the result
 function calculateSum(a, b) {
   return a - b
 }
-
 const result = calculateSum(5, 3)
 console.log(result) // Expected: 8, Actual: 2`,
-    hints: [
-      'There is an arithmetic issue inside calculateSum.',
-      'The operator used is not the right one for addition.',
-      "Change '-' to '+' inside calculateSum to fix the bug.",
-    ],
-  },
-  react: {
-    code: `import React from 'react'
+      hints: [
+        'Look inside the calculateSum function body.',
+        'The arithmetic operator does not match what the function is supposed to do.',
+        "Change '-' to '+' inside calculateSum.",
+      ],
+    },
+    {
+      code: `// Supposed to find the largest number in an array
+function findMax(nums) {
+  let max = 0
+  for (let i = 1; i < nums.length; i++) {
+    if (nums[i] > max) max = nums[i]
+  }
+  return max
+}
+console.log(findMax([-5, -2, -8])) // Expected: -2, Actual: 0`,
+      hints: [
+        'The bug relates to how max is initialised before the loop.',
+        'The starting value of max will give wrong results when all numbers are negative.',
+        "Change 'let max = 0' to 'let max = nums[0]'.",
+      ],
+    },
+  ],
+  react: [
+    {
+      code: `import React from 'react'
 
-// Bug 1: useState is not imported
-// Bug 2: onClick decrements instead of incrementing
+// Supposed to show a counter with an increment button
 function Counter() {
   const [count, setCount] = useState(0)
 
@@ -68,30 +165,44 @@ function Counter() {
     </div>
   )
 }
-
 export default Counter`,
-    hints: [
-      'Check whether all required React hooks are imported.',
-      "Look at the button label vs what the onClick actually does — do they match?",
-      "Add '{ useState }' to the React import and change 'count - 1' to 'count + 1'.",
-    ],
-  },
-  python: {
-    code: `# Bug: range() stops before the last number, so the last item is skipped
+      hints: [
+        'There are two bugs — one in the imports, one in the button logic.',
+        'useState is not imported, and the button does the opposite of what it says.',
+        "Add '{ useState }' to the React import and change 'count - 1' to 'count + 1'.",
+      ],
+    },
+  ],
+  python: [
+    {
+      code: `# Supposed to sum all numbers in a list
 def sum_list(numbers):
     total = 0
-    for i in range(len(numbers) - 1):  # off-by-one error
+    for i in range(len(numbers) - 1):
         total += numbers[i]
     return total
 
-numbers = [1, 2, 3, 4, 5]
-print(sum_list(numbers))  # Expected: 15, Actual: 10`,
-    hints: [
-      'There is an issue with the loop bounds in sum_list.',
-      'The range() call does not cover all elements of the list.',
-      "Change 'range(len(numbers) - 1)' to 'range(len(numbers))' to iterate over every item.",
-    ],
-  },
+print(sum_list([1, 2, 3, 4, 5]))  # Expected: 15, Actual: 10`,
+      hints: [
+        'The bug is in the loop that iterates over the list.',
+        "The range() call doesn't cover every element.",
+        "Change 'range(len(numbers) - 1)' to 'range(len(numbers))'.",
+      ],
+    },
+    {
+      code: `# Supposed to check if a word is a palindrome
+def is_palindrome(word):
+    reversed_word = word[::-1]
+    return word == reversed_word
+
+print(is_palindrome('Racecar'))  # Expected: True, Actual: False`,
+      hints: [
+        'The function almost works — think about edge cases with capitalisation.',
+        'The comparison is case-sensitive, so mixed-case inputs fail.',
+        "Compare lowercased versions: 'return word.lower() == reversed_word.lower()'.",
+      ],
+    },
+  ],
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -100,7 +211,6 @@ function DebuggingPage() {
   const [userCode, setUserCode] = useState('')
   const [isValidating, setIsValidating] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [showConfetti, setShowConfetti] = useState(false)
   const [hints, setHints] = useState([
     { id: 1, text: '', used: false },
     { id: 2, text: '', used: false },
@@ -109,9 +219,8 @@ function DebuggingPage() {
   const [showHintWarning, setShowHintWarning] = useState(false)
   const [currentChoice, setCurrentChoice] = useState(null)
   const [showLanguageModal, setShowLanguageModal] = useState(false)
-
-  // Validation result state
-  const [validationResult, setValidationResult] = useState(null) // null | { passed: bool, feedback: string }
+  const [validationResult, setValidationResult] = useState(null)
+  const [usedTopics, setUsedTopics] = useState([])
 
   const navigate = useNavigate()
 
@@ -120,10 +229,19 @@ function DebuggingPage() {
     if (choice) setCurrentChoice(JSON.parse(choice))
   }, [])
 
-  // ── Language display label ──────────────────────────────────────────────────
   const languageLabel = (lang) => {
     if (!lang) return ''
     return lang === 'react' ? 'React (JSX)' : lang.charAt(0).toUpperCase() + lang.slice(1)
+  }
+
+  // Pick a topic not yet used this session
+  const pickFreshTopic = (language) => {
+    const pool = TOPICS[language] || TOPICS.javascript
+    const unused = pool.filter((t) => !usedTopics.includes(t))
+    const available = unused.length > 0 ? unused : pool
+    const chosen = pickRandom(available)
+    setUsedTopics((prev) => [...prev.filter((t) => pool.includes(t)), chosen])
+    return chosen
   }
 
   // ── AI: generate buggy code ─────────────────────────────────────────────────
@@ -144,81 +262,98 @@ function DebuggingPage() {
     ])
 
     const { language, level } = currentChoice
+    const topic = pickFreshTopic(language)
+    const bugPool = BUG_TYPES[level] || BUG_TYPES.easy
+    const bug1 = pickRandom(bugPool)
+    const bug2 = pickRandom(bugPool.filter((b) => b !== bug1))
+    const seed = Math.floor(Math.random() * 999999)
 
-    const codePrompt = `You are a coding challenge generator for a debugging practice app.
+    const codePrompt = `You are a creative coding challenge generator. Random seed: ${seed}.
 
-Generate a ${languageLabel(language)} code snippet with exactly 2–3 intentional bugs suitable for a ${level} difficulty level.
+Write a ${languageLabel(language)} code snippet about this specific topic: "${topic}".
 
-Rules:
-- Return ONLY the raw code — no markdown, no backticks, no explanations.
-- Add a short comment at the very top describing what the code is SUPPOSED to do.
-- Bugs should be realistic and varied (e.g. wrong operator, missing import, off-by-one, wrong variable name, logic error).
-- Keep it under 20 lines.
-- For "easy": simple, very obvious bugs like a wrong operator or typo. For "medium": subtler bugs like wrong condition or missing return. For "hard": tricky logic bugs that require careful reading.
-${language === 'react' ? '- Use functional components with hooks.' : ''}
-${language === 'python' ? '- Use standard Python 3 syntax only.' : ''}`
+The code must contain EXACTLY 2 hidden bugs:
+- Bug 1 type: ${bug1}
+- Bug 2 type: ${bug2}
+
+Requirements:
+- Return ONLY raw code. No markdown, no backticks, no prose outside of code comments.
+- Line 1 must be a comment stating what the working code is supposed to do.
+- Do NOT add any comments that hint at or point to the bugs. The bugs should be hidden.
+- Keep it 10–20 lines total.
+- Make this scenario creative and different — avoid generic "add two numbers" examples.
+- Difficulty level: ${level}. ${
+      level === 'easy'
+        ? 'Bugs are obvious on first read.'
+        : level === 'medium'
+        ? 'Bugs require understanding the logic flow.'
+        : 'Bugs are subtle and require careful analysis.'
+    }
+${language === 'react' ? '- Use a functional React component with hooks. Include proper JSX.' : ''}
+${language === 'python' ? '- Pure Python 3. No external imports.' : ''}
+${language === 'javascript' ? '- Modern JS syntax (const/let, arrow functions).' : ''}`
 
     try {
-      const generated = await callClaude(codePrompt)
+      const generated = await callClaude(codePrompt, 1)
       setBrokenCode(generated)
-      toast.success('Code generated! Find and fix the bugs.')
-      await generateHints(generated, language, level)
+      toast.success('Challenge ready! Find and fix the bugs.')
+      generateHints(generated, language, level, topic) // run async, don't block
     } catch (error) {
       console.error('Code generation failed:', error)
       toast.error('AI unavailable — loaded a fallback challenge.')
-      const fallback = FALLBACKS[language] || FALLBACKS.javascript
+      const pool = FALLBACKS[language] || FALLBACKS.javascript
+      const fallback = pickRandom(pool)
       setBrokenCode(fallback.code)
-      setHints(
-        fallback.hints.map((text, i) => ({ id: i + 1, text, used: false }))
-      )
+      setHints(fallback.hints.map((text, i) => ({ id: i + 1, text, used: false })))
     } finally {
       setIsGenerating(false)
     }
   }
 
   // ── AI: generate 3 progressive hints ───────────────────────────────────────
-  const generateHints = async (code, language, level) => {
-    const hintPrompt = `You are a debugging coach.
+  const generateHints = async (code, language, level, topic) => {
+    const hintPrompt = `You are a patient debugging coach for a ${level}-level student.
 
-Given this buggy ${languageLabel(language)} code:
+The student is working on: "${topic}" written in ${languageLabel(language)}.
+The code below contains exactly 2 bugs.
+
 \`\`\`
 ${code}
 \`\`\`
 
-Generate exactly 3 progressive hints for a ${level} level student.
-- Hint 1: Vague — point to the general area of the problem without naming it.
-- Hint 2: More specific — describe the type of bug without giving the fix.
-- Hint 3: Direct — explain exactly what to change.
+Write 3 hints that get progressively more specific:
+- Hint 1: Mention only WHERE in the code to look (e.g. "the loop", "the return statement") — not what is wrong.
+- Hint 2: Describe the TYPE of bug (e.g. "an operator is incorrect") — still no fix.
+- Hint 3: State exactly what to change to fix both bugs.
 
-Respond with ONLY this format and nothing else:
+Reply ONLY in this format, nothing else:
 Hint 1: <text>
 Hint 2: <text>
 Hint 3: <text>`
 
     try {
-      const raw = await callClaude(hintPrompt)
-      const lines = raw.split('\n').filter((l) => /^Hint \d:/.test(l.trim()))
+      const raw = await callClaude(hintPrompt, 0.3)
+      const lines = raw.split('\n').filter((l) => /^Hint \d:/i.test(l.trim()))
       if (lines.length === 3) {
         setHints(
           lines.map((line, i) => ({
             id: i + 1,
-            text: line.replace(/^Hint \d:\s*/, '').trim(),
+            text: line.replace(/^Hint \d:\s*/i, '').trim(),
             used: false,
           }))
         )
       }
-    } catch (error) {
-      console.error('Hint generation failed:', error)
+    } catch (err) {
+      console.error('Hint generation failed:', err)
     }
   }
 
-  // ── Validate user's solution using Claude ───────────────────────────────────
+  // ── Validate user's solution ────────────────────────────────────────────────
   const validateCode = async () => {
     if (!userCode.trim()) {
       toast.error('Please write your solution before validating!')
       return
     }
-
     if (!brokenCode.trim()) {
       toast.error('Please generate a challenge first!')
       return
@@ -227,52 +362,63 @@ Hint 3: <text>`
     setIsValidating(true)
     setValidationResult(null)
 
-    const { language, level } = currentChoice
+    const { language } = currentChoice
 
-    const validationPrompt = `You are a strict code review assistant for a debugging practice app.
+    const validationPrompt = `You are an expert ${languageLabel(language)} developer evaluating a student's debugging attempt.
 
-The student was given this BROKEN ${languageLabel(language)} code to fix:
+## Original broken code:
 \`\`\`
 ${brokenCode}
 \`\`\`
 
-The student submitted this as their fix:
+## Student's submitted fix:
 \`\`\`
 ${userCode}
 \`\`\`
 
-Your job:
-1. Identify all the bugs in the original broken code.
-2. Check if the student's submission actually fixes ALL of those bugs correctly.
-3. Ignore cosmetic differences (whitespace, comments, variable naming style) — focus only on whether the logic bugs are fixed.
+## How to evaluate:
 
-Respond with ONLY this exact format and nothing else:
-RESULT: PASS or FAIL
-FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what bug(s) are still present or were introduced>`
+1. First, identify every logical bug in the ORIGINAL broken code.
+2. Check if the student's code fixes all of those logical bugs.
+3. Check the student has not introduced any NEW logical bugs.
+
+## Judging rules (read carefully):
+- Judge LOGIC and CORRECTNESS only. Ignore whitespace, comments, variable name style, code formatting.
+- A fix is VALID even if the student solved it differently than you would — what matters is whether it works correctly.
+- Only mark FAIL when a real logical bug from the original still exists in the student's code, OR the student introduced a new bug that breaks correctness.
+- Do NOT fail the student for style, structure, or personal preference differences.
+- Be fair and encouraging.
+
+Respond with ONLY one of these two formats — no other text whatsoever:
+
+RESULT: PASS
+FEEDBACK: <one friendly sentence confirming which bugs were successfully fixed>
+
+RESULT: FAIL
+FEEDBACK: <one specific sentence naming exactly which bug is still present or was newly introduced>`
 
     try {
-      const raw = await callClaude(validationPrompt)
+      // Use temperature 0 for deterministic, reliable grading
+      const raw = await callClaude(validationPrompt, 0)
       const resultMatch = raw.match(/RESULT:\s*(PASS|FAIL)/i)
       const feedbackMatch = raw.match(/FEEDBACK:\s*(.+)/is)
 
       const passed = resultMatch ? resultMatch[1].toUpperCase() === 'PASS' : false
-      const feedback = feedbackMatch ? feedbackMatch[1].trim() : raw
+      const feedback = feedbackMatch
+        ? feedbackMatch[1].trim()
+        : 'Could not parse feedback — please try again.'
 
       setValidationResult({ passed, feedback })
 
       if (passed) {
-        setShowConfetti(true)
-        toast.success('🎉 Correct! All bugs fixed!')
+        toast.success('🎉 All bugs fixed!')
         updateUserProgress()
-        setTimeout(() => {
-          setShowConfetti(false)
-        }, 3000)
       } else {
-        toast.error('Not quite — check the feedback below.')
+        toast.error('Not quite — read the feedback below.')
       }
     } catch (error) {
       console.error('Validation failed:', error)
-      toast.error('Could not validate — AI unavailable. Please try again.')
+      toast.error('Validation unavailable — please try again.')
     } finally {
       setIsValidating(false)
     }
@@ -280,21 +426,17 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
 
   const updateUserProgress = () => {
     const saved = localStorage.getItem('userProgress')
-    const progress = saved
-      ? JSON.parse(saved)
-      : { javascript: 0, react: 0, python: 0 }
-
+    const progress = saved ? JSON.parse(saved) : { javascript: 0, react: 0, python: 0 }
     const lang = currentChoice?.language
     if (lang && progress[lang] !== undefined) {
       progress[lang] = Math.min(100, (progress[lang] || 0) + 10)
     }
-
     localStorage.setItem('userProgress', JSON.stringify(progress))
   }
 
-  // ── Navigation / UI helpers ─────────────────────────────────────────────────
+  // ── UI helpers ──────────────────────────────────────────────────────────────
   const handleBack = () => {
-    if (window.confirm('Are you sure you want to go back? Your current progress will not be saved.')) {
+    if (window.confirm('Go back to dashboard? Progress on this challenge will not be saved.')) {
       localStorage.removeItem('debuggingChoice')
       navigate('/dashboard')
     }
@@ -330,6 +472,7 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
 
   const handleLanguageSelection = (choice) => {
     setCurrentChoice(choice)
+    setUsedTopics([])
     localStorage.setItem('debuggingChoice', JSON.stringify(choice))
     setShowLanguageModal(false)
     toast.success(`Selected ${choice.language.toUpperCase()} — ${choice.level.toUpperCase()}`)
@@ -349,10 +492,7 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
             <p className="modal-subtitle">
               Test your debugging skills with AI-generated code problems
             </p>
-            <button
-              className="btn-start-debugging"
-              onClick={() => setShowLanguageModal(true)}
-            >
+            <button className="btn-start-debugging" onClick={() => setShowLanguageModal(true)}>
               Start Debugging Challenge
             </button>
             <p className="instruction-text">
@@ -375,6 +515,7 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
                     setBrokenCode('')
                     setUserCode('')
                     setValidationResult(null)
+                    setUsedTopics([])
                   }}
                 >
                   Change Selection
@@ -389,7 +530,7 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
               <button
                 className="btn-hint"
                 onClick={handleHintClick}
-                disabled={hintsUsed >= 3}
+                disabled={hintsUsed >= 3 || !brokenCode}
               >
                 Hint ({3 - hintsUsed} remaining)
               </button>
@@ -412,7 +553,11 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
                 readOnly={true}
                 language={currentChoice?.language}
                 button={{
-                  text: isGenerating ? 'Generating...' : brokenCode ? 'Regenerate' : 'Generate Code',
+                  text: isGenerating
+                    ? 'Generating...'
+                    : brokenCode
+                    ? 'New Challenge'
+                    : 'Generate Challenge',
                   onClick: generateCode,
                   color: 'blue',
                   disabled: isGenerating,
@@ -427,7 +572,7 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
                 language={currentChoice?.language}
                 placeholder="Type your fixed code here..."
                 button={{
-                  text: isValidating ? 'Validating...' : 'Validate Code',
+                  text: isValidating ? 'Checking...' : 'Validate Fix',
                   onClick: validateCode,
                   color: 'green',
                   disabled: !userCode.trim() || isValidating || !brokenCode.trim(),
@@ -439,21 +584,29 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
 
             {/* ── Validation Result Panel ── */}
             {validationResult && (
-              <div className={`validation-result-panel ${validationResult.passed ? 'result-pass' : 'result-fail'}`}>
+              <div
+                className={`validation-result-panel ${
+                  validationResult.passed ? 'result-pass' : 'result-fail'
+                }`}
+              >
                 <div className="result-icon">
                   {validationResult.passed ? '✅' : '❌'}
                 </div>
                 <div className="result-content">
                   <h3 className="result-title">
-                    {validationResult.passed ? 'All Bugs Fixed!' : 'Not Quite There Yet'}
+                    {validationResult.passed ? 'All Bugs Fixed! 🎉' : 'Not Quite There Yet'}
                   </h3>
                   <p className="result-feedback">{validationResult.feedback}</p>
-                  {validationResult.passed && (
+                  {validationResult.passed ? (
+                    <button className="btn-next-challenge" onClick={generateCode}>
+                      Next Challenge →
+                    </button>
+                  ) : (
                     <button
-                      className="btn-next-challenge"
-                      onClick={() => navigate('/dashboard')}
+                      className="btn-try-again"
+                      onClick={() => setValidationResult(null)}
                     >
-                      Try Another Challenge →
+                      Keep Trying
                     </button>
                   )}
                 </div>
@@ -465,7 +618,7 @@ FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what b
         {isValidating && (
           <div className="validation-overlay">
             <div className="spinner"></div>
-            <p>Validating your code...</p>
+            <p>Checking your fix...</p>
           </div>
         )}
 
