@@ -6,7 +6,12 @@ function LanguageLevelModal({ onComplete, onClose }) {
   const [language, setLanguage] = useState('')
   const [level, setLevel] = useState('')
 
-  const languages = ['javascript', 'react']
+  const languages = [
+    { value: 'javascript', label: 'JAVASCRIPT', icon: '🟨' },
+    { value: 'react', label: 'REACT', icon: '⚛️' },
+    { value: 'python', label: 'PYTHON', icon: '🐍' },
+  ]
+
   const levels = [
     { value: 'easy', label: 'Easy', color: 'green' },
     { value: 'medium', label: 'Medium', color: 'orange' },
@@ -24,9 +29,7 @@ function LanguageLevelModal({ onComplete, onClose }) {
   }
 
   const handleClose = () => {
-    if (onClose) {
-      onClose()
-    }
+    if (onClose) onClose()
   }
 
   return (
@@ -38,7 +41,7 @@ function LanguageLevelModal({ onComplete, onClose }) {
             <line x2="18" y2="18" x1="6" y1="6"></line>
           </svg>
         </button>
-        
+
         {step === 1 && (
           <>
             <h2>Choose Debugging Language</h2>
@@ -46,14 +49,12 @@ function LanguageLevelModal({ onComplete, onClose }) {
             <div className="language-options">
               {languages.map((lang) => (
                 <button
-                  key={lang}
+                  key={lang.value}
                   className="language-option"
-                  onClick={() => handleLanguageSelect(lang)}
+                  onClick={() => handleLanguageSelect(lang.value)}
                 >
-                  <span className="language-icon">
-                    {lang === 'javascript' ? '🟨' : '⚛️'}
-                  </span>
-                  <span className="language-name">{lang.toUpperCase()}</span>
+                  <span className="language-icon">{lang.icon}</span>
+                  <span className="language-name">{lang.label}</span>
                 </button>
               ))}
             </div>
@@ -63,7 +64,9 @@ function LanguageLevelModal({ onComplete, onClose }) {
         {step === 2 && (
           <>
             <h2>Select Difficulty Level</h2>
-            <p className="modal-subtitle">Choose a challenge level for {language.toUpperCase()}</p>
+            <p className="modal-subtitle">
+              Choose a challenge level for {language.toUpperCase()}
+            </p>
             <div className="level-options">
               {levels.map((lvl) => (
                 <button
@@ -80,10 +83,7 @@ function LanguageLevelModal({ onComplete, onClose }) {
                 </button>
               ))}
             </div>
-            <button 
-              className="btn-back-step"
-              onClick={() => setStep(1)}
-            >
+            <button className="btn-back-step" onClick={() => setStep(1)}>
               Back to Language Selection
             </button>
           </>
