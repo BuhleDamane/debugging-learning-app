@@ -154,6 +154,7 @@
   transition: height 0.3s ease;
 }
 
+/* Filled progress bar */
 .progress-fill {
   height: 100%;
   background: linear-gradient(135deg, #8B5CF6 0%, #9333EA 100%);
@@ -166,6 +167,7 @@
   transition: width 0.5s ease;
   position: relative;
   overflow: hidden;
+  min-width: 48px; /* ensure text is visible even at small widths */
 }
 
 .progress-fill::after {
@@ -182,6 +184,19 @@
     transparent
   );
   animation: shimmer 2s infinite;
+}
+
+/* Empty progress bar — shows 0% label inside the track, not in the fill */
+.progress-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 14px;
+  color: rgba(168, 85, 247, 0.5);
+  font-weight: 600;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 @keyframes shimmer {
