@@ -88,11 +88,20 @@ function pickRandom(arr) {
 
 // ── Anthropic API helper ──────────────────────────────────────────────────────
 async function callClaude(prompt, temperature = 1) {
+  // ✅ FIX 1: Guard against missing API key so you get a clear error
+  // instead of a silent "Validation unavailable" failure
+  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY
+  if (!apiKey) {
+    throw new Error(
+      'API key is missing. Add VITE_ANTHROPIC_API_KEY to your Netlify environment variables and redeploy.'
+    )
+  }
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+      'x-api-key': apiKey, // ✅ use the validated variable
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true',
     },
@@ -413,12 +422,14 @@ FEEDBACK: <one specific sentence naming exactly which bug is still present or wa
       if (passed) {
         toast.success('🎉 All bugs fixed!')
         updateUserProgress()
-      } else {
-        toast.error('Not quite — read the feedback below.')
       }
+      // ✅ FIX 2: Removed the toast.error on fail — the result panel below
+      // already shows the feedback clearly, no need for a duplicate toast
     } catch (error) {
       console.error('Validation failed:', error)
-      toast.error('Validation unavailable — please try again.')
+      // ✅ FIX 3: Show the actual error message so you know what went wrong
+      // (e.g. missing API key) instead of always saying "unavailable"
+      toast.error(`Validation failed: ${error.message}`)
     } finally {
       setIsValidating(false)
     }
@@ -582,6 +593,15 @@ FEEDBACK: <one specific sentence naming exactly which bug is still present or wa
               />
             </div>
 
+            {/* ✅ FIX 4: Spinner is now INSIDE the currentChoice block, directly
+                below the editors, so it always renders during validation */}
+            {isValidating && (
+              <div className="validation-overlay">
+                <div className="spinner"></div>
+                <p>Checking your fix...</p>
+              </div>
+            )}
+
             {/* ── Validation Result Panel ── */}
             {validationResult && (
               <div
@@ -613,13 +633,6 @@ FEEDBACK: <one specific sentence naming exactly which bug is still present or wa
               </div>
             )}
           </>
-        )}
-
-        {isValidating && (
-          <div className="validation-overlay">
-            <div className="spinner"></div>
-            <p>Checking your fix...</p>
-          </div>
         )}
 
         {showLanguageModal && (
