@@ -8,17 +8,11 @@ import { useAuth } from '../context/AuthContext'
 
 function formatName(rawName) {
   if (!rawName) return 'User'
-  
   return rawName
-    .replace(/[.,]/g, '')           
+    .replace(/[.,]/g, '')
     .split(' ')
     .filter(Boolean)
-    .map(word => {
-     
-      return word
-        .toLowerCase()
-        .replace(/^[a-z']/, (char) => char.toUpperCase())
-    })
+    .map(word => word.toLowerCase().replace(/^[a-z']/, (char) => char.toUpperCase()))
     .join(' ')
 }
 
@@ -26,7 +20,8 @@ function DashboardPage() {
   const [showLanguageModal, setShowLanguageModal] = useState(false)
   const [userProgress, setUserProgress] = useState({
     javascript: 0,
-    react: 0
+    react: 0,
+    python: 0,
   })
   const navigate = useNavigate()
   const { currentUser } = useAuth()
@@ -36,14 +31,10 @@ function DashboardPage() {
 
   useEffect(() => {
     const hasChosen = localStorage.getItem('debuggingChoice')
-    if (!hasChosen) {
-      setShowLanguageModal(true)
-    }
-    
+    if (!hasChosen) setShowLanguageModal(true)
+
     const savedProgress = localStorage.getItem('userProgress')
-    if (savedProgress) {
-      setUserProgress(JSON.parse(savedProgress))
-    }
+    if (savedProgress) setUserProgress(JSON.parse(savedProgress))
   }, [])
 
   const handleLogout = () => {
@@ -66,53 +57,46 @@ function DashboardPage() {
     setShowLanguageModal(false)
   }
 
+  const progressCards = [
+    { key: 'javascript', label: 'JavaScript Progress' },
+    { key: 'react', label: 'React Progress' },
+    { key: 'python', label: 'Python Progress' },
+  ]
+
   return (
     <div className="dashboard-page">
       <Navbar onLogout={handleLogout} />
       <div className="dashboard-container">
         <Sidebar progress={userProgress} />
-        
+
         <main className="dashboard-main">
           <div className="welcome-section">
             <h1>Welcome, <span className="highlight">{firstName}</span> 👋</h1>
             <p>Are you ready to master debugging?</p>
           </div>
-          
+
           <div className="dashboard-content">
             <div className="stats-cards">
-              <div className="stat-card">
-                <h3>JavaScript Progress</h3>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill"
-                    style={{ width: `${userProgress.javascript}%` }}
-                  >
-                    {userProgress.javascript}%
+              {progressCards.map(({ key, label }) => (
+                <div className="stat-card" key={key}>
+                  <h3>{label}</h3>
+                  <div className="progress-bar">
+                    <div
+                      className="progress-fill"
+                      style={{ width: `${userProgress[key] || 0}%` }}
+                    >
+                      {userProgress[key] || 0}%
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              <div className="stat-card">
-                <h3>React Progress</h3>
-                <div className="progress-bar">
-                  <div 
-                    className="progress-fill"
-                    style={{ width: `${userProgress.react}%` }}
-                  >
-                    {userProgress.react}%
-                  </div>
-                </div>
-              </div>
+              ))}
             </div>
-            
+
             <div className="action-section">
-              <button 
-                className="btn-start"
-                onClick={handleStartDebugging}
-              >
+              <button className="btn-start" onClick={handleStartDebugging}>
                 Start Debugging Session
               </button>
-              
+
               <div className="quick-stats">
                 <h4>Recent Activity</h4>
                 <p>Complete challenges to see your activity here</p>
@@ -121,11 +105,11 @@ function DashboardPage() {
           </div>
         </main>
       </div>
-      
+
       {showLanguageModal && (
-        <LanguageLevelModal 
-          onComplete={handleChoiceComplete} 
-          onClose={handleCloseModal}  
+        <LanguageLevelModal
+          onComplete={handleChoiceComplete}
+          onClose={handleCloseModal}
         />
       )}
     </div>
