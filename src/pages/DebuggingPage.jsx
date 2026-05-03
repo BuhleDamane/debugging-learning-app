@@ -11,7 +11,12 @@ import '../styles/DebuggingPage.css'
 async function callClaude(prompt) {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': import.meta.env.VITE_ANTHROPIC_API_KEY,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true',
+    },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: 1000,
@@ -104,6 +109,10 @@ function DebuggingPage() {
   const [showHintWarning, setShowHintWarning] = useState(false)
   const [currentChoice, setCurrentChoice] = useState(null)
   const [showLanguageModal, setShowLanguageModal] = useState(false)
+
+  // Validation result state
+  const [validationResult, setValidationResult] = useState(null) // null | { passed: bool, feedback: string }
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -127,6 +136,7 @@ function DebuggingPage() {
     setIsGenerating(true)
     setBrokenCode('')
     setUserCode('')
+    setValidationResult(null)
     setHints([
       { id: 1, text: '', used: false },
       { id: 2, text: '', used: false },
@@ -144,7 +154,7 @@ Rules:
 - Add a short comment at the very top describing what the code is SUPPOSED to do.
 - Bugs should be realistic and varied (e.g. wrong operator, missing import, off-by-one, wrong variable name, logic error).
 - Keep it under 20 lines.
-- For "easy": simple, obvious bugs. For "medium": subtler bugs. For "hard": tricky logic bugs.
+- For "easy": simple, very obvious bugs like a wrong operator or typo. For "medium": subtler bugs like wrong condition or missing return. For "hard": tricky logic bugs that require careful reading.
 ${language === 'react' ? '- Use functional components with hooks.' : ''}
 ${language === 'python' ? '- Use standard Python 3 syntax only.' : ''}`
 
@@ -199,32 +209,73 @@ Hint 3: <text>`
       }
     } catch (error) {
       console.error('Hint generation failed:', error)
-      // Keep blank hints — not critical
     }
   }
 
-  // ── Validate user's solution ────────────────────────────────────────────────
-  const validateCode = () => {
+  // ── Validate user's solution using Claude ───────────────────────────────────
+  const validateCode = async () => {
     if (!userCode.trim()) {
       toast.error('Please write your solution before validating!')
       return
     }
 
+    if (!brokenCode.trim()) {
+      toast.error('Please generate a challenge first!')
+      return
+    }
+
     setIsValidating(true)
+    setValidationResult(null)
 
-    setTimeout(() => {
-      setShowConfetti(true)
-      toast.success('Congratulations! Code validated successfully!')
-      updateUserProgress()
+    const { language, level } = currentChoice
 
-      setTimeout(() => {
-        setShowConfetti(false)
-        const goNext = window.confirm('Great job! Would you like to try another challenge?')
-        if (goNext) navigate('/dashboard')
-      }, 3000)
+    const validationPrompt = `You are a strict code review assistant for a debugging practice app.
 
+The student was given this BROKEN ${languageLabel(language)} code to fix:
+\`\`\`
+${brokenCode}
+\`\`\`
+
+The student submitted this as their fix:
+\`\`\`
+${userCode}
+\`\`\`
+
+Your job:
+1. Identify all the bugs in the original broken code.
+2. Check if the student's submission actually fixes ALL of those bugs correctly.
+3. Ignore cosmetic differences (whitespace, comments, variable naming style) — focus only on whether the logic bugs are fixed.
+
+Respond with ONLY this exact format and nothing else:
+RESULT: PASS or FAIL
+FEEDBACK: <one or two sentences explaining what was correct, and if FAIL, what bug(s) are still present or were introduced>`
+
+    try {
+      const raw = await callClaude(validationPrompt)
+      const resultMatch = raw.match(/RESULT:\s*(PASS|FAIL)/i)
+      const feedbackMatch = raw.match(/FEEDBACK:\s*(.+)/is)
+
+      const passed = resultMatch ? resultMatch[1].toUpperCase() === 'PASS' : false
+      const feedback = feedbackMatch ? feedbackMatch[1].trim() : raw
+
+      setValidationResult({ passed, feedback })
+
+      if (passed) {
+        setShowConfetti(true)
+        toast.success('🎉 Correct! All bugs fixed!')
+        updateUserProgress()
+        setTimeout(() => {
+          setShowConfetti(false)
+        }, 3000)
+      } else {
+        toast.error('Not quite — check the feedback below.')
+      }
+    } catch (error) {
+      console.error('Validation failed:', error)
+      toast.error('Could not validate — AI unavailable. Please try again.')
+    } finally {
       setIsValidating(false)
-    }, 1000)
+    }
   }
 
   const updateUserProgress = () => {
@@ -323,6 +374,7 @@ Hint 3: <text>`
                     setCurrentChoice(null)
                     setBrokenCode('')
                     setUserCode('')
+                    setValidationResult(null)
                   }}
                 >
                   Change Selection
@@ -378,12 +430,35 @@ Hint 3: <text>`
                   text: isValidating ? 'Validating...' : 'Validate Code',
                   onClick: validateCode,
                   color: 'green',
-                  disabled: !userCode.trim() || isValidating,
+                  disabled: !userCode.trim() || isValidating || !brokenCode.trim(),
                 }}
                 onCopy={handleCopy}
                 onPaste={handlePaste}
               />
             </div>
+
+            {/* ── Validation Result Panel ── */}
+            {validationResult && (
+              <div className={`validation-result-panel ${validationResult.passed ? 'result-pass' : 'result-fail'}`}>
+                <div className="result-icon">
+                  {validationResult.passed ? '✅' : '❌'}
+                </div>
+                <div className="result-content">
+                  <h3 className="result-title">
+                    {validationResult.passed ? 'All Bugs Fixed!' : 'Not Quite There Yet'}
+                  </h3>
+                  <p className="result-feedback">{validationResult.feedback}</p>
+                  {validationResult.passed && (
+                    <button
+                      className="btn-next-challenge"
+                      onClick={() => navigate('/dashboard')}
+                    >
+                      Try Another Challenge →
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </>
         )}
 
